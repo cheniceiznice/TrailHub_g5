@@ -27,12 +27,13 @@ Route::get('api/define', [DictionaryController::class, 'define']);
 
 //Slack 
 
-Route::prefix('slack-bot')->group(function () {
+Route::prefix('slack')->group(function () {
     Route::post('send', [SlackController::class, 'sendMessage']);
     Route::get('messages', [SlackController::class, 'getMessages']);
     Route::post('update', [SlackController::class, 'updateMessage']);
     Route::post('delete', [SlackController::class, 'deleteMessage']);
 });
+
 
 
 

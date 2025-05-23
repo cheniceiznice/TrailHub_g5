@@ -11,7 +11,7 @@ class SlackService
 
     public function __construct()
     {
-        $this->token = env('SLACK_BOT_TOKEN');
+        $this->token = env('SLACK_USER_TOKEN');
     }
 
     public function sendMessage(string $channel, string $message)
