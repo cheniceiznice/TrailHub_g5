@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrailHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        input, textarea, button {
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        #response {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>TrailHub</h1>
+
+    <!-- Slack API Section -->
+    <div class="container">
+        <h2>Send Slack Message</h2>
+        <form id="slackForm">
+            <input type="text" id="slackChannel" placeholder="Channel ID" required>
+            <textarea id="slackMessage" placeholder="Enter your message" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+        <div id="slackResponse"></div>
+    </div>
+
+    <!-- Merriam-Webster (MyleBook) API Section -->
+    <div class="container">
+        <h2>Lookup Word Definition (Merriam-Webster)</h2>
+        <form id="wordForm">
+            <input type="text" id="word" placeholder="Enter word" required>
+            <button type="submit">Lookup Word</button>
+        </form>
+        <div id="wordResponse"></div>
+    </div>
+
+    <!-- OpenAI API Section -->
+    <div class="container">
+        <h2>Ask OpenAI</h2>
+        <form id="openAIForm">
+            <textarea id="openAIQuery" placeholder="Ask OpenAI something..." required></textarea>
+            <button type="submit">Submit Query</button>
+        </form>
+        <div id="openAIResponse"></div>
+    </div>
+
+    <!-- Google Calendar API Section -->
+    <div class="container">
+        <h2>Create Google Calendar Event</h2>
+        <form id="calendarForm">
+            <input type="text" id="eventSummary" placeholder="Event Summary" required>
+            <input type="datetime-local" id="eventStart" required>
+            <input type="datetime-local" id="eventEnd" required>
+            <button type="submit">Create Event</button>
+        </form>
+        <div id="calendarResponse"></div>
+    </div>
+
+    <!-- Google Drive API Section -->
+    <div class="container">
+        <h2>Upload File to Google Drive</h2>
+        <form id="driveForm">
+            <input type="file" id="driveFile" required>
+            <button type="submit">Upload File</button>
+        </form>
+        <div id="driveResponse"></div>
+    </div>
+
+    <script>
+        // API Tokens and Gateway Secret
+        const GATEWAY_SECRET = "s02IEnRFxH9yZtZUoiVU8BqDU6QcTdc1"; // Your Gateway Secret
+        const MYLE_BOOK_API_KEY = "7f7f0001-214d-4722-96bc-d09bc4345b7f"; // Merriam-Webster API Key
+        const NIKA_TALK_USER_TOKEN = "xoxp-8912848241072-8894198403268-8897008224902-0efe1f9e8224d8013da6145c1d0fb99f"; // Slack OAuth Token
+        const JATRAIL_API_KEY = "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"; // OpenAI API Key
+
+        // Slack API - Send Message
+document.getElementById("slackForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const channel = document.getElementById("slackChannel").value;
+    const message = document.getElementById("slackMessage").value;
+
+    // Replace with your actual token
+    const bearerToken = GATEWAY_SECRET; // Or NIKA_TALK_USER_TOKEN, depending on usage
+
+    fetch("http://127.0.0.1:8000/nika-talk/send", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${bearerToken}`
+        },
+        body: JSON.stringify({ channel: channel, text: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Display the response in a readable format
+        const formatted = `
+            <strong>Message Sent!</strong><br>
+            <strong>Channel:</strong> ${channel}<br>
+            <strong>Message:</strong> ${message}<br>
+            <strong>Response:</strong><pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+        document.getElementById("slackResponse").innerHTML = formatted;
+    })
+    .catch(error => {
+        document.getElementById("slackResponse").innerHTML = `
+            <strong>Error:</strong> ${error.message}
+        `;
+    });
+});
+
+
+       // Merriam-Webster API
+document.getElementById("wordForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const word = document.getElementById("word").value;
+
+    fetch(`http://127.0.0.1:8000/myle-book/define?word=${word}&key=${MYLE_BOOK_API_KEY}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GATEWAY_SECRET}` // Gateway Secret added as Bearer token
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && data[0] && data[0].shortdef) {
+            // Assuming the API response contains a 'shortdef' field in an array
+            document.getElementById("wordResponse").innerHTML = `
+                <h3>Word: ${word}</h3>
+                <p><strong>Definition:</strong> ${data[0].shortdef[0]}</p>
+            `;
+        } else {
+            document.getElementById("wordResponse").innerHTML = `<p>No definition found.</p>`;
+        }
+    })
+    .catch(error => {
+        document.getElementById("wordResponse").innerHTML = `<p>Error: ${error.message}</p>`;
+    });
+});
+
+
+        // OpenAI API
+        document.getElementById("openAIForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const query = document.getElementById("openAIQuery").value;
+
+            fetch("http://127.0.0.1:8000/jatrail/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${JATRAIL_API_KEY}`,  // OpenAI API Key
+                    "Authorization": `Bearer ${GATEWAY_SECRET}`,  // Gateway Secret used here as Bearer token
+                },
+                body: JSON.stringify({ message: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("openAIResponse").innerHTML = `<p>OpenAI Response: ${data.reply}</p>`;
+            })
+            .catch(error => {
+                document.getElementById("openAIResponse").innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+
+        // Google Calendar API
+        document.getElementById("calendarForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const summary = document.getElementById("eventSummary").value;
+            const start = document.getElementById("eventStart").value;
+            const end = document.getElementById("eventEnd").value;
+
+            fetch("http://127.0.0.1:8000/google/calendar/event", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer <Your_Google_Access_Token>",  // Add your Google OAuth token
+                    "Authorization": `Bearer ${GATEWAY_SECRET}`, // Gateway Secret used here as Bearer token
+                },
+                body: JSON.stringify({ summary, start, end })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("calendarResponse").innerHTML = `<p>Event created: ${JSON.stringify(data)}</p>`;
+            })
+            .catch(error => {
+                document.getElementById("calendarResponse").innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+
+        // Google Drive API
+        document.getElementById("driveForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const file = document.getElementById("driveFile").files[0];
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            fetch("http://127.0.0.1:8000/google/drive/upload", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer <Your_Google_Access_Token>",  // Add your Google OAuth token
+                    "Authorization": `Bearer ${GATEWAY_SECRET}`, // Gateway Secret used here as Bearer token
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("driveResponse").innerHTML = `<p>File uploaded: ${JSON.stringify(data)}</p>`;
+            })
+            .catch(error => {
+                document.getElementById("driveResponse").innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
