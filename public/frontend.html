@@ -5,29 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrailHub</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .container {
-            margin-bottom: 20px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        input, textarea, button {
-            margin-bottom: 10px;
-            padding: 10px;
-            width: 100%;
-            max-width: 400px;
-        }
-        #response {
-            margin-top: 10px;
-        }
-    </style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    .container {
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+
+    /* Make only Slack and OpenAI forms flexbox for horizontal layout */
+    #slackForm, #openAIForm {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    input, textarea {
+        padding: 10px;
+        width: 100%;
+        max-width: 400px;
+        box-sizing: border-box;
+    }
+
+    textarea {
+        resize: vertical;
+        height: 80px;
+    }
+
+    button {
+        padding: 10px 20px;
+        max-height: 42px;
+        align-self: flex-start;
+    }
+
+    #response {
+        margin-top: 10px;
+    }
+</style>
+
 </head>
 <body>
 
@@ -185,57 +207,82 @@ document.getElementById("wordForm").addEventListener("submit", function(event) {
             });
         });
 
-        // Google Calendar API
-        document.getElementById("calendarForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+       // HARDCODED GOOGLE ACCESS TOKEN
+const GOOGLE_ACCESS_TOKEN = "ya29.a0AW4Xtxi9OqJR9h1uCiCVCJe-HfuWRIP-Mb0Z1Bwd21ldRR5GKcaEvlXSsDIWUHPtCJjj7ekFbLobkHxEt3c9cU1_R2hPsWWrtgumzBvLubS95tudKs8-2hwfW1KwKK6oztkSA51veHDJu6yrLa_aYuGd0Bf5rOY2y_ecOctv2waCgYKAZESARISFQHGX2Mi0FZBwIPtr7tEa-DfM9F1Xg0177";
 
-            const summary = document.getElementById("eventSummary").value;
-            const start = document.getElementById("eventStart").value;
-            const end = document.getElementById("eventEnd").value;
+// Google Calendar API
+document.getElementById("calendarForm").addEventListener("submit", function(event) {
+    event.preventDefault();
 
-            fetch("http://127.0.0.1:8000/google/calendar/event", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer <Your_Google_Access_Token>",  // Add your Google OAuth token
-                    "Authorization": `Bearer ${GATEWAY_SECRET}`, // Gateway Secret used here as Bearer token
-                },
-                body: JSON.stringify({ summary, start, end })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("calendarResponse").innerHTML = `<p>Event created: ${JSON.stringify(data)}</p>`;
-            })
-            .catch(error => {
-                document.getElementById("calendarResponse").innerHTML = `<p>Error: ${error.message}</p>`;
-            });
-        });
+    const summary = document.getElementById("eventSummary").value;
+    const start = document.getElementById("eventStart").value;
+    const end = document.getElementById("eventEnd").value;
 
-        // Google Drive API
-        document.getElementById("driveForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+    fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GOOGLE_ACCESS_TOKEN}`
+        },
+        body: JSON.stringify({
+            summary: summary,
+            start: { dateTime: new Date(start).toISOString() },
+            end: { dateTime: new Date(end).toISOString() }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById("calendarResponse").innerHTML = `<p><strong>Error:</strong> ${data.error.message}</p>`;
+        } else {
+            document.getElementById("calendarResponse").innerHTML = `
+                <strong>Event Created Successfully!</strong><br>
+                <strong>Summary:</strong> ${data.summary}<br>
+                <strong>Start:</strong> ${new Date(data.start.dateTime).toLocaleString()}<br>
+                <strong>End:</strong> ${new Date(data.end.dateTime).toLocaleString()}<br>
+                <strong>Event Link:</strong> <a href="${data.htmlLink}" target="_blank">View on Google Calendar</a>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById("calendarResponse").innerHTML = `<p><strong>Error:</strong> ${error.message}</p>`;
+    });
+});
 
-            const file = document.getElementById("driveFile").files[0];
+// Google Drive API
+document.getElementById("driveForm").addEventListener("submit", function(event) {
+    event.preventDefault();
 
-            const formData = new FormData();
-            formData.append("file", file);
+    const file = document.getElementById("driveFile").files[0];
+    const formData = new FormData();
+    formData.append("file", file);
 
-            fetch("http://127.0.0.1:8000/google/drive/upload", {
-                method: "POST",
-                headers: {
-                    "Authorization": "Bearer <Your_Google_Access_Token>",  // Add your Google OAuth token
-                    "Authorization": `Bearer ${GATEWAY_SECRET}`, // Gateway Secret used here as Bearer token
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("driveResponse").innerHTML = `<p>File uploaded: ${JSON.stringify(data)}</p>`;
-            })
-            .catch(error => {
-                document.getElementById("driveResponse").innerHTML = `<p>Error: ${error.message}</p>`;
-            });
-        });
+    fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${GOOGLE_ACCESS_TOKEN}`
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById("driveResponse").innerHTML = `<p><strong>Error:</strong> ${data.error.message}</p>`;
+        } else {
+            document.getElementById("driveResponse").innerHTML = `
+                <strong>File Uploaded Successfully!</strong><br>
+                <strong>File Name:</strong> ${file.name}<br>
+                <strong>File ID:</strong> ${data.id}<br>
+                <strong>Drive Link:</strong> <a href="https://drive.google.com/file/d/${data.id}/view" target="_blank">Open in Google Drive</a>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById("driveResponse").innerHTML = `<p><strong>Error:</strong> ${error.message}</p>`;
+    });
+});
+
+
     </script>
 </body>
 </html>
