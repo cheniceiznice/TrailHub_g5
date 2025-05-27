@@ -6,12 +6,14 @@ use Google_Client;
 use Google_Service_Calendar;
 use Google_Service_Calendar_Event;
 
-class CylendarService  // Updated service name
+class CylendarService
 {
     protected function getClient($accessToken)
     {
         $client = new Google_Client();
-        $client->setAuthConfig(storage_path('app/google-client-secret.json'));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setRedirectUri(config('services.google.redirect'));
         $client->addScope(Google_Service_Calendar::CALENDAR);
 
         // Decode token if JSON string
@@ -25,75 +27,68 @@ class CylendarService  // Updated service name
 
         $client->setAccessToken($accessToken);
 
-        // Refresh token if expired
         if ($client->isAccessTokenExpired() && isset($accessToken['refresh_token'])) {
-            $client->fetchAccessTokenWithRefreshToken($accessToken['refresh_token']);
+            $newToken = $client->fetchAccessTokenWithRefreshToken($accessToken['refresh_token']);
+            $client->setAccessToken($newToken);
+            // TODO: Save $newToken back to your DB to keep tokens updated
         }
 
         return $client;
     }
 
-    public function getEvent(string $eventId, $accessToken)
+    public function getEvents($accessToken, $calendarId = 'primary', $params = [])
     {
         $client = $this->getClient($accessToken);
         $service = new Google_Service_Calendar($client);
 
-        return $service->events->get('primary', $eventId);
+        $events = $service->events->listEvents($calendarId, $params);
+
+        return $events->getItems();
     }
 
-    public function createEvent(array $data, $accessToken)
+    public function getEvent(string $eventId, $accessToken, $calendarId = 'primary')
     {
         $client = $this->getClient($accessToken);
         $service = new Google_Service_Calendar($client);
 
-        $event = new Google_Service_Calendar_Event([
-            'summary' => $data['summary'],
-            'start' => [
-                'dateTime' => $data['start'],
-                'timeZone' => $data['timeZone'] ?? 'Asia/Kolkata',
-            ],
-            'end' => [
-                'dateTime' => $data['end'],
-                'timeZone' => $data['timeZone'] ?? 'Asia/Kolkata',
-            ],
-        ]);
-
-        return $service->events->insert('primary', $event);
+        return $service->events->get($calendarId, $eventId);
     }
 
-    public function updateEvent(string $eventId, array $data, $accessToken)
+    public function createEvent(array $data, $accessToken, $calendarId = 'primary')
     {
         $client = $this->getClient($accessToken);
         $service = new Google_Service_Calendar($client);
 
-        // Fetch existing event
-        $event = $service->events->get('primary', $eventId);
+        $event = new Google_Service_Calendar_Event($data);
 
-        // Update fields
+        return $service->events->insert($calendarId, $event);
+    }
+
+    public function updateEvent(string $eventId, array $data, $accessToken, $calendarId = 'primary')
+    {
+        $client = $this->getClient($accessToken);
+        $service = new Google_Service_Calendar($client);
+
+        $event = $service->events->get($calendarId, $eventId);
+
         if (isset($data['summary'])) {
             $event->setSummary($data['summary']);
         }
         if (isset($data['start'])) {
-            $event->setStart([
-                'dateTime' => $data['start'],
-                'timeZone' => $data['timeZone'] ?? 'Asia/Kolkata',
-            ]);
+            $event->setStart($data['start']);
         }
         if (isset($data['end'])) {
-            $event->setEnd([
-                'dateTime' => $data['end'],
-                'timeZone' => $data['timeZone'] ?? 'Asia/Kolkata',
-            ]);
+            $event->setEnd($data['end']);
         }
 
-        return $service->events->update('primary', $eventId, $event);
+        return $service->events->update($calendarId, $eventId, $event);
     }
 
-    public function deleteEvent(string $eventId, $accessToken)
+    public function deleteEvent(string $eventId, $accessToken, $calendarId = 'primary')
     {
         $client = $this->getClient($accessToken);
         $service = new Google_Service_Calendar($client);
 
-        return $service->events->delete('primary', $eventId);
+        return $service->events->delete($calendarId, $eventId);
     }
 }

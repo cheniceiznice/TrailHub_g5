@@ -7,17 +7,12 @@ use Illuminate\Support\Facades\Log;
 
 class NikaTalkService
 {
-    protected $token;
-
-    public function __construct()
+    public function sendMessage(string $channel, string $message, string $token = null)
     {
-        $this->token = env('NIKA_TALK_USER_TOKEN');
-    }
+        $token = $token ?? config('services.slack.user_token');
 
-    public function sendMessage(string $channel, string $message)
-    {
-        $response = Http::withToken($this->token)
-            ->post('https://slack.com/api/chat.postMessage', [
+        $response = Http::withToken($token)
+            ->post(config('services.slack.api_base_url') . 'chat.postMessage', [
                 'channel' => $channel,
                 'text' => $message,
             ]);
@@ -25,20 +20,24 @@ class NikaTalkService
         return $this->handleResponse($response);
     }
 
-    public function getMessages(string $channel)
+    public function getMessages(string $channel, string $token = null)
     {
-        $response = Http::withToken($this->token)
-            ->get('https://slack.com/api/conversations.history', [
+        $token = $token ?? config('services.slack.user_token');
+
+        $response = Http::withToken($token)
+            ->get(config('services.slack.api_base_url') . 'conversations.history', [
                 'channel' => $channel,
             ]);
 
         return $this->handleResponse($response);
     }
 
-    public function updateMessage(string $channel, string $ts, string $message)
+    public function updateMessage(string $channel, string $ts, string $message, string $token = null)
     {
-        $response = Http::withToken($this->token)
-            ->post('https://slack.com/api/chat.update', [
+        $token = $token ?? config('services.slack.user_token');
+
+        $response = Http::withToken($token)
+            ->post(config('services.slack.api_base_url') . 'chat.update', [
                 'channel' => $channel,
                 'ts' => $ts,
                 'text' => $message,
@@ -47,10 +46,12 @@ class NikaTalkService
         return $this->handleResponse($response);
     }
 
-    public function deleteMessage(string $channel, string $ts)
+    public function deleteMessage(string $channel, string $ts, string $token = null)
     {
-        $response = Http::withToken($this->token)
-            ->post('https://slack.com/api/chat.delete', [
+        $token = $token ?? config('services.slack.user_token');
+
+        $response = Http::withToken($token)
+            ->post(config('services.slack.api_base_url') . 'chat.delete', [
                 'channel' => $channel,
                 'ts' => $ts,
             ]);

@@ -4,12 +4,12 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 
-class MyleBookService  // Update service name
+class MyleBookService
 {
     public function lookup($word)
     {
-        $base = env('MYLE_BOOK_API_BASE');
-        $key = env('MYLE_BOOK_API_KEY');
+        $base = config('services.mylebook.base_url');
+        $key = config('services.mylebook.api_key');
 
         $response = Http::get("{$base}{$word}?key={$key}");
 

@@ -29,16 +29,27 @@ return [
     ],
 
     'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
+        'api_base_url' => 'https://slack.com/api/',
+        'user_token' => env('NIKA_TALK_USER_TOKEN'),
+        'default_channel' => env('NIKA_TALK_CHANNEL_ID'),
     ],
-    'google' => [
-    'client_id' => env('GOOGLE_CLIENT_ID'),
-    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-    'redirect' => env('GOOGLE_REDIRECT_URI'),
-],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'calendar_base_url' => 'https://www.googleapis.com/calendar/v3',
+        'drive_base_url' => 'https://www.googleapis.com/drive/v3',
+    ],
+
+    'mylebook' => [
+        'base_url' => env('MYLE_BOOK_API_BASE'),
+        'api_key' => env('MYLE_BOOK_API_KEY'),
+    ],
+
+    'openai' => [
+        'api_base_url' => 'https://api.openai.com/v1/',
+        'api_key' => env('JATRAIL_API_KEY'),
+    ],
 
 ];

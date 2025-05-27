@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\NikaTalkService;  // Update service name
+use App\Services\NikaTalkService;
 
-class NikaTalkController extends Controller  // Update controller name
+class NikaTalkController extends Controller
 {
-    protected $slackService;  // Update service reference
+    protected $slackService;
 
-    public function __construct(NikaTalkService $slackService)  // Update service name
+    public function __construct(NikaTalkService $slackService)
     {
         $this->slackService = $slackService;
     }
@@ -19,7 +19,7 @@ class NikaTalkController extends Controller  // Update controller name
         $channel = $request->input('channel');
         $text = $request->input('text');
 
-        $result = $this->slackService->sendMessage($channel, $text);  // Update service method
+        $result = $this->slackService->sendMessage($channel, $text);
 
         if (!empty($result['error'])) {
             return response()->json(['error' => $result['message']], 500);
@@ -32,7 +32,7 @@ class NikaTalkController extends Controller  // Update controller name
     {
         $channel = $request->input('channel');
 
-        $result = $this->slackService->getMessages($channel);  // Update service method
+        $result = $this->slackService->getMessages($channel);
 
         if (!empty($result['error'])) {
             return response()->json(['error' => $result['message']], 500);
@@ -47,7 +47,7 @@ class NikaTalkController extends Controller  // Update controller name
         $ts = $request->input('ts');
         $text = $request->input('text');
 
-        $result = $this->slackService->updateMessage($channel, $ts, $text);  // Update service method
+        $result = $this->slackService->updateMessage($channel, $ts, $text);
 
         if (!empty($result['error'])) {
             return response()->json(['error' => $result['message']], 500);
@@ -61,7 +61,7 @@ class NikaTalkController extends Controller  // Update controller name
         $channel = $request->input('channel');
         $ts = $request->input('ts');
 
-        $result = $this->slackService->deleteMessage($channel, $ts);  // Update service method
+        $result = $this->slackService->deleteMessage($channel, $ts);
 
         if (!empty($result['error'])) {
             return response()->json(['error' => $result['message']], 500);

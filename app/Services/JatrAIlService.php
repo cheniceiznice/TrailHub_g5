@@ -4,20 +4,19 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 
-class JatrAIlService  // Update service name
+class JatrAIlService
 {
-    protected $apiKey;
-    protected $endpoint = 'https://api.openai.com/v1/chat/completions';
+    protected $endpoint;
 
     public function __construct()
     {
-        $this->apiKey = env('JATRAIL_API_KEY');
+        $this->endpoint = config('services.openai.api_base_url') . 'chat/completions';
     }
 
-    public function chat($messages, $model = 'gpt-4o-mini')
+    public function chat($messages, $token, $model = 'gpt-4o-mini')
     {
         $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->apiKey}",
+            'Authorization' => "Bearer {$token}",
             'Content-Type' => 'application/json',
         ])->post($this->endpoint, [
             'model' => $model,

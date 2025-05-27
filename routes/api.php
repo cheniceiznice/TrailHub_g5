@@ -1,36 +1,49 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CylendarController;         // Google Calendar Controller
-use App\Http\Controllers\SynDriveController;        // Google Drive Controller
-use App\Http\Controllers\MyleBookController;        // Dictionary Controller
-use App\Http\Controllers\NikaTalkController;        // Slack Controller
-use App\Http\Controllers\JatrAIlController;         // OpenAI Controller
-use App\Http\Middleware\ValidateGatewaySecret;     // Include the middleware
+use App\Http\Controllers\CylendarController;
+use App\Http\Controllers\SynDriveController;
+use App\Http\Controllers\MyleBookController;
+use App\Http\Controllers\NikaTalkController;
+use App\Http\Controllers\JatrAIlController;
+use App\Http\Controllers\AuthController;
 
-// Apply ValidateGatewaySecret middleware to all routes that need the gateway secret
-Route::middleware([ValidateGatewaySecret::class])->group(function () {
-    // Syn Archive (Google Drive)
-    Route::post('/SynDrive/upload', [SynDriveController::class, 'uploadFile']);
+Route::prefix('api')->group(function () {
 
-    // Cylendar (Google Calendar)
-    Route::get('/cylendar/event', [CylendarController::class, 'getEvent']);
-    Route::get('/cylendar/event/{eventId}', [CylendarController::class, 'getEventById']);
-    Route::post('/cylendar/event', [CylendarController::class, 'createEvent']);
-    Route::put('/cylendar/event/{eventId}', [CylendarController::class, 'updateEvent']);
-    Route::delete('/cylendar/event/{eventId}', [CylendarController::class, 'deleteEvent']);
+    // Public login route
+    Route::post('login', [AuthController::class, 'login']);
 
-    // Myle Book (Merriam-Webster Dictionary)
-    Route::get('/myle-book/define', [MyleBookController::class, 'define']);
+    // Protected routes
+    Route::middleware('auth:api')->group(function () {
 
-    // JatrAIl (OpenAI Chat)
-    Route::post('/jatrail/chat', [JatrAIlController::class, 'chat']);
-});
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::post('refresh', [AuthController::class, 'refresh']);
+        Route::get('me', [AuthController::class, 'me']);
 
-// Slack Routes (NikaTalkController)
-Route::middleware([ValidateGatewaySecret::class])->prefix('nika-talk')->group(function () {
-    Route::post('send', [NikaTalkController::class, 'sendMessage']);
-    Route::get('messages', [NikaTalkController::class, 'getMessages']);
-    Route::post('update', [NikaTalkController::class, 'updateMessage']);
-    Route::post('delete', [NikaTalkController::class, 'deleteMessage']);
+        // SynDrive routes
+        Route::post('SynDrive/upload', [SynDriveController::class, 'uploadFile']);
+        Route::get('SynDrive/list', [SynDriveController::class, 'listFiles']);
+        Route::delete('SynDrive/delete/{fileId}', [SynDriveController::class, 'deleteFile']);
+
+        // Google Calendar routes
+        Route::get('cylendar/events', [CylendarController::class, 'getEvents']);
+        Route::get('cylendar/event/{eventId}', [CylendarController::class, 'getEvent']);
+        Route::post('cylendar/event', [CylendarController::class, 'createEvent']);
+        Route::put('cylendar/event/{eventId}', [CylendarController::class, 'updateEvent']);
+        Route::delete('cylendar/event/{eventId}', [CylendarController::class, 'deleteEvent']);
+
+        // Dictionary route
+        Route::get('myle-book/define', [MyleBookController::class, 'define']);
+
+        // OpenAI route
+        Route::post('jatrail/chat', [JatrAIlController::class, 'chat']);
+
+        // Slack (NikaTalk) routes
+        Route::prefix('nika-talk')->group(function () {
+            Route::post('send', [NikaTalkController::class, 'sendMessage']);
+            Route::get('messages', [NikaTalkController::class, 'getMessages']);
+            Route::post('update', [NikaTalkController::class, 'updateMessage']);
+            Route::post('delete', [NikaTalkController::class, 'deleteMessage']);
+        });
+    });
 });
