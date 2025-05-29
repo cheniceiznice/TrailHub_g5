@@ -27,3 +27,6 @@ RUN echo '<Directory /var/www/html/public>\n\
 
 # Expose port 80
 EXPOSE 80
+
+# Start Apache in the foreground so Render can keep the container running
+CMD ["apache2-foreground"]
