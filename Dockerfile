@@ -4,11 +4,17 @@ FROM php:8.2-apache
 # Enable Apache mod_rewrite (for Laravel's pretty URLs)
 RUN a2enmod rewrite
 
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Set working directory
 WORKDIR /var/www/html
 
 # Copy all project files
 COPY . .
+
+# Install Laravel dependencies (includes vendor/)
+RUN composer install --no-dev --optimize-autoloader
 
 # Set correct file permissions for Apache
 RUN chown -R www-data:www-data /var/www/html \
@@ -24,6 +30,9 @@ RUN echo '<Directory /var/www/html/public>\n\
     AllowOverride All\n\
     Require all granted\n\
 </Directory>' >> /etc/apache2/apache2.conf
+
+# Generate Laravel application key
+RUN php artisan key:generate
 
 # Expose port 80
 EXPOSE 80
