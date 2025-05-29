@@ -10,12 +10,20 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Set correct permissions
+# Set correct file permissions for Apache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage
+ && find /var/www/html -type f -exec chmod 644 {} \; \
+ && find /var/www/html -type d -exec chmod 755 {} \;
 
 # Update Apache to serve from /public
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
+# Allow access to the public directory
+RUN echo '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
 
 # Expose port 80
 EXPOSE 80
