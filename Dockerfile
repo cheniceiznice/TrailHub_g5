@@ -32,6 +32,8 @@ RUN echo '<Directory /var/www/html/public>\n\
     Require all granted\n\
 </Directory>' >> /etc/apache2/apache2.conf
 
+RUN docker-php-ext-install pdo pdo_mysql
+
 # Cache Laravel config
 RUN php artisan route:cache && php artisan view:cache
 
