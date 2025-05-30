@@ -33,7 +33,7 @@ RUN echo '<Directory /var/www/html/public>\n\
 </Directory>' >> /etc/apache2/apache2.conf
 
 # Cache Laravel config
-RUN php artisan config:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache
+RUN php artisan route:cache && php artisan view:cache
 
 # Expose port
 EXPOSE 80
